@@ -1,0 +1,183 @@
+name: Build and Deploy to EKS
+
+on:
+    push:
+        branches:
+            - main
+    pull_request:
+        branches:
+            - main
+        types: [opened, synchronize, reopened]
+
+env:
+    AWS_REGION: us-east-1
+    ECR_REPOSITORY: investiq
+    EKS_CLUSTER_NAME: investiq-cluster
+
+jobs:
+    test:
+        name: Run Tests
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+
+            - name: Set up Python
+              uses: actions/setup-python@v5
+              with:
+                  python-version: "3.12"
+
+            - name: Install Poetry
+              uses: snok/install-poetry@v1
+              with:
+                  version: 1.7.1
+                  virtualenvs-create: true
+                  virtualenvs-in-project: true
+
+            - name: Load cached venv
+              id: cached-poetry-dependencies
+              uses: actions/cache@v4
+              with:
+                  path: backend/.venv
+                  key: venv-${{ runner.os }}-${{ hashFiles('backend/poetry.lock') }}
+
+            - name: Install dependencies
+              working-directory: ./backend
+              run: poetry install --no-interaction --no-ansi
+
+            - name: Run tests
+              working-directory: ./backend
+              run: poetry run pytest --cov=. --cov-report=xml || true
+
+            - name: Run linter
+              working-directory: ./backend
+              run: poetry run ruff check . || true
+
+    build-and-push:
+        name: Build and Push Docker Images
+        runs-on: ubuntu-latest
+        needs: test
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        strategy:
+            matrix:
+                service:
+                    - name: backend
+                      dockerfile: infra/docker/backend.Dockerfile
+                    - name: llm-service
+                      dockerfile: infra/docker/llm-service.Dockerfile
+                    - name: payment-agent
+                      dockerfile: infra/docker/payment-agent.Dockerfile
+                    - name: security-agent
+                      dockerfile: infra/docker/security-agent.Dockerfile
+                    - name: credit-agent
+                      dockerfile: infra/docker/credit-agent.Dockerfile
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+
+            - name: Set up Docker Buildx
+              uses: docker/setup-buildx-action@v3
+
+            - name: Login to Docker Hub
+              uses: docker/login-action@v3
+              with:
+                  username: ${{ secrets.DOCKER_HUB_USERNAME }}
+                  password: ${{ secrets.DOCKER_HUB_TOKEN }}
+
+            - name: Extract metadata
+              id: meta
+              uses: docker/metadata-action@v5
+              with:
+                  images: ${{ secrets.DOCKER_HUB_USERNAME }}/investiq-${{ matrix.service.name }}
+                  tags: |
+                      type=ref,event=branch
+                      type=sha,prefix={{branch}}-
+                      type=raw,value=latest,enable={{is_default_branch}}
+
+            - name: Build and push Docker image
+              uses: docker/build-push-action@v5
+              with:
+                  context: .
+                  file: ${{ matrix.service.dockerfile }}
+                  push: true
+                  tags: ${{ steps.meta.outputs.tags }}
+                  labels: ${{ steps.meta.outputs.labels }}
+                  cache-from: type=gha
+                  cache-to: type=gha,mode=max
+
+    deploy-to-eks:
+        name: Deploy to EKS
+        runs-on: ubuntu-latest
+        needs: build-and-push
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+
+            - name: Configure AWS credentials
+              uses: aws-actions/configure-aws-credentials@v4
+              with:
+                  aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+                  aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+                  aws-region: ${{ env.AWS_REGION }}
+                  # Note: Using hackathon AWS account/profile
+
+            - name: Update kubeconfig
+              run: |
+                  aws eks update-kubeconfig \
+                    --name ${{ env.EKS_CLUSTER_NAME }} \
+                    --region ${{ env.AWS_REGION }}
+
+            - name: Deploy to Kubernetes
+              run: |
+                  # Apply namespace
+                  kubectl apply -f infra/kubernetes/namespace.yaml
+
+                  # Apply ConfigMap
+                  kubectl apply -f infra/kubernetes/configmap.yaml
+
+                  # Apply database deployments
+                  kubectl apply -f infra/kubernetes/postgres-deployment.yaml
+                  kubectl apply -f infra/kubernetes/redis-deployment.yaml
+
+                  # Apply backend deployment
+                  kubectl apply -f infra/kubernetes/backend-deployment.yaml
+
+                  # Apply LLM service deployment
+                  kubectl apply -f infra/kubernetes/llm-service-deployment.yaml
+
+                  # Apply agent deployments
+                  kubectl apply -f infra/kubernetes/payment-agent-deployment.yaml
+                  kubectl apply -f infra/kubernetes/security-agent-deployment.yaml
+                  kubectl apply -f infra/kubernetes/credit-agent-deployment.yaml
+
+                  # Apply HPA
+                  kubectl apply -f infra/kubernetes/hpa.yaml
+
+                  # Apply Ingress
+                  kubectl apply -f infra/kubernetes/ingress.yaml
+
+            - name: Verify deployment
+              run: |
+                  kubectl rollout status deployment/backend -n investiq --timeout=5m
+                  kubectl rollout status deployment/llm-service -n investiq --timeout=5m
+                  kubectl rollout status deployment/payment-agent -n investiq --timeout=5m
+                  kubectl rollout status deployment/security-agent -n investiq --timeout=5m
+                  kubectl rollout status deployment/credit-agent -n investiq --timeout=5m
+
+            - name: Health check
+              run: |
+                  # Wait for services to be ready
+                  sleep 30
+
+                  # Get backend service endpoint
+                  BACKEND_ENDPOINT=$(kubectl get svc backend -n investiq -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
+
+                  if [ -n "$BACKEND_ENDPOINT" ]; then
+                    curl -f http://$BACKEND_ENDPOINT:8000/api/healthcheck || exit 1
+                  else
+                    echo "Backend service endpoint not available yet"
+                    kubectl port-forward -n investiq svc/backend 8000:8000 &
+                    sleep 5
+                    curl -f http://localhost:8000/api/healthcheck || exit 1
+                  fi

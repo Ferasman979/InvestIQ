@@ -35,7 +35,7 @@ def fetch_recent_transactions():
             FROM transactions
             WHERE tx_date >= CURRENT_DATE - INTERVAL '2 days'
             ORDER BY tx_date DESC
-            LIMIT 3
+        LIMIT 3
         """))
         rows = []
         for row in result:

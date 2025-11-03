@@ -69,6 +69,27 @@ poetry run uvicorn app:app --reload --port 8000
 poetry run python scripts/load_csv_data.py ../data/transactions.csv
 ```
 
+## Test LLM Service (Optional)
+
+The LLM service generates security questions based on transaction data.
+
+```bash
+# 1. Set GOOGLE_API_KEY (if you have one)
+export GOOGLE_API_KEY=your-api-key-here
+
+# 2. Start LLM service
+cd backend/llm-service
+export DATABASE_URL=postgresql://investiq:investiq123@localhost:5432/investiq_db
+uvicorn main:app --port 8000
+
+# 3. Test endpoint (in another terminal)
+curl -X POST http://localhost:8000/generate-security-question \
+  -H "Content-Type: application/json" \
+  -d '{}'
+```
+
+See `backend/llm-service/README.md` for detailed testing instructions.
+
 ## Environment Variables
 
 See `.env.example` for all available environment variables.

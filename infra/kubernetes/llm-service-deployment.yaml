@@ -1,0 +1,88 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: llm-service
+  namespace: investiq
+  labels:
+    app: llm-service
+    component: llm
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: llm-service
+  template:
+    metadata:
+      labels:
+        app: llm-service
+        component: llm
+    spec:
+      containers:
+        - name: llm-service
+          # Using AWS ECR (hackathon account)
+          image: 466650003123.dkr.ecr.us-east-1.amazonaws.com/investiq-llm-service:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8000
+              name: http
+          envFrom:
+            - configMapRef:
+                name: investiq-config
+            - secretRef:
+                name: investiq-secrets
+          env:
+            # DATABASE_URL is stored in secrets (same as backend)
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: investiq-secrets
+                  key: DATABASE_URL
+            # GOOGLE_API_KEY is stored in secrets
+            - name: GOOGLE_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: investiq-secrets
+                  key: GEMINI_API_KEY
+          livenessProbe:
+            httpGet:
+              path: /docs
+              port: 8000
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /docs
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 3
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "500m"
+            limits:
+              memory: "1Gi"
+              cpu: "1000m"
+      restartPolicy: Always
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: llm-service
+  namespace: investiq
+  labels:
+    app: llm-service
+    component: llm
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8000
+      targetPort: 8000
+      protocol: TCP
+      name: http
+  selector:
+    app: llm-service

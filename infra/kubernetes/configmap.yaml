@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: investiq-config
+  namespace: investiq
+  labels:
+    app: investiq
+data:
+  # Note: DATABASE_URL is now stored in secrets (more secure)
+  # Database connection string is constructed from secrets in deployment
+  
+  # Redis Configuration
+  REDIS_URL: "redis://redis.investiq.svc.cluster.local:6379/0"
+  
+  # Application Configuration
+  APP_NAME: "InvestIQ"
+  APP_ENV: "production"
+  LOG_LEVEL: "INFO"
+  
+  # Agent Configuration
+  AGENT_PAYMENT_QUEUE: "payment_queue"
+  AGENT_SECURITY_QUEUE: "security_queue"
+  AGENT_CREDIT_QUEUE: "credit_queue"
+  
+  # CORS Configuration
+  CORS_ORIGINS: "http://localhost:3000,http://localhost:5173"
+

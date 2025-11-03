@@ -1,0 +1,77 @@
+{
+  "dashboard": {
+    "title": "InvestIQ Agent Performance",
+    "tags": ["investiq", "agents", "performance"],
+    "timezone": "browser",
+    "schemaVersion": 27,
+    "version": 0,
+    "refresh": "30s",
+    "panels": [
+      {
+        "id": 1,
+        "title": "Payment Agent - Tasks Processed",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(agent_tasks_processed_total{agent=\"payment_agent\"}[5m])",
+            "legendFormat": "Tasks/sec"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0}
+      },
+      {
+        "id": 2,
+        "title": "Security Agent - Fraud Detection Rate",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(agent_fraud_detected_total{agent=\"security_agent\"}[5m])",
+            "legendFormat": "Fraud Detections/sec"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0}
+      },
+      {
+        "id": 3,
+        "title": "Credit Agent - Optimizations Recommended",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(agent_credit_optimizations_total{agent=\"credit_agent\"}[5m])",
+            "legendFormat": "Optimizations/sec"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8}
+      },
+      {
+        "id": 4,
+        "title": "Agent Queue Depth",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "redis_queue_length{queue=~\"payment_queue|security_queue|credit_queue\"}",
+            "legendFormat": "{{queue}}"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8}
+      },
+      {
+        "id": 5,
+        "title": "Agent Processing Time",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, rate(agent_task_duration_seconds_bucket[5m]))",
+            "legendFormat": "{{agent}} - p95"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 24, "x": 0, "y": 16}
+      }
+    ],
+    "time": {
+      "from": "now-1h",
+      "to": "now"
+    }
+  }
+}
+

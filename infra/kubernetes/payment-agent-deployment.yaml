@@ -1,0 +1,80 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: payment-agent
+  namespace: investiq
+  labels:
+    app: payment-agent
+    component: agent
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: payment-agent
+  template:
+    metadata:
+      labels:
+        app: payment-agent
+        component: agent
+    spec:
+      containers:
+        - name: payment-agent
+          image: <dockerhub-username>/investiq-payment-agent:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+              name: metrics
+          envFrom:
+            - configMapRef:
+                name: investiq-config
+            - secretRef:
+                name: investiq-secrets
+          env:
+            - name: AGENT_NAME
+              value: "payment_agent"
+            - name: AGENT_QUEUE
+              valueFrom:
+                configMapKeyRef:
+                  name: investiq-config
+                  key: AGENT_PAYMENT_QUEUE
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 60
+            periodSeconds: 30
+            timeoutSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+      restartPolicy: Always
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: payment-agent
+  namespace: investiq
+  labels:
+    app: payment-agent
+    component: agent
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8080
+      targetPort: 8080
+      protocol: TCP
+      name: metrics
+  selector:
+    app: payment-agent
