@@ -17,14 +17,30 @@ export default function ChatPage() {
 
   async function send() {
     if (!text.trim()) return;
-    const user: ChatMessage = { id: crypto.randomUUID(), role: "user", content: text.trim(), timestamp: Date.now() };
+    const user: ChatMessage = {
+      id: crypto.randomUUID(),
+      role: "user",
+      content: text.trim(),
+      timestamp: Date.now(),
+    };
     setMessages((m) => [...m, user]);
     setText("");
-    // mock reply; swap with your API later
-    const reply = mockReply(user.content);
-    const asst: ChatMessage = { id: crypto.randomUUID(), role: "assistant", content: reply, timestamp: Date.now() };
+
+    const r = await fetch("/api/chat", {
+      method: "POST",
+      body: JSON.stringify({ message: user.content }),
+    });
+    const json = await r.json();
+    const asst: ChatMessage = {
+      id: crypto.randomUUID(),
+      role: "assistant",
+      content: json.reply,
+      timestamp: Date.now(),
+    };
     setMessages((m) => [...m, asst]);
   }
+
+
 
   function mockReply(q: string) {
     if (/apple/i.test(q)) return "The Apple charge was flagged due to a higher-than-usual amount.";

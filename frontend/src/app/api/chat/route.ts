@@ -1,12 +1,62 @@
 import { NextRequest, NextResponse } from "next/server";
 
+const BASE = process.env.FASTAPI_BASE ?? "http://localhost:8000";
+
+function buildMockTransaction(message: string) {
+  const now = new Date().toISOString();
+  const highAmount = /high|large|big/i.test(message);
+  const fraudMerchant = /fraud|scam/i.test(message);
+
+  return {
+    transaction_id: "tx-" + Date.now(),
+    user_id: "user-123",
+    amount: highAmount ? 6000 : 42.5,
+    currency: "CAD",
+    merchant: fraudMerchant ? "fraud_shop" : "Amazon",
+    transaction_date: now,
+    status: "pending",
+    suspicious_flag: false,
+    created_at: now,
+    updated_at: now,
+  };
+}
 
 export async function POST(req: NextRequest) {
-const { message } = await req.json();
+  const { message } = await req.json();
 
-let reply = "I need more details.";
-if (/apple/i.test(message)) reply = "The Apple charge was flagged due to higher-than-usual amount compared to your 30-day average.";
-if (/recurr|subscription|rent/i.test(message)) reply = "I see a recurring pattern. I can schedule a reminder one day before due date.";
-if (/budget|spend/i.test(message)) reply = "Your top categories this week are Food and Transport. Consider a $200 cap for Food.";
-return NextResponse.json({ reply });
+  const tx = buildMockTransaction(String(message ?? ""));
+
+  const url = `${BASE}/api/transactions/api/verify-transaction`;
+
+  try {
+    const r = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(tx),
+    });
+
+    if (!r.ok) {
+      return NextResponse.json(
+        { reply: `Upstream error: ${r.status}` },
+        { status: 502 }
+      );
+    }
+
+    const data = await r.json() as {
+      transaction_id: string;
+      suspicious: boolean;
+      reason: string;
+    };
+
+    const reply = data.suspicious
+      ? `I blocked this transaction (${data.transaction_id}) because: ${data.reason}.`
+      : `This transaction (${data.transaction_id}) looks normal: ${data.reason}.`;
+
+    return NextResponse.json({ reply, raw: data });
+  } catch (e: any) {
+    return NextResponse.json(
+      { reply: "Backend unavailable. Using mock reasoning only.", error: String(e?.message ?? e) },
+      { status: 500 }
+    );
+  }
 }

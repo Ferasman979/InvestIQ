@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 
-const BASE = process.env.FASTAPI_BASE ?? "http://localhost:8000"; // e.g., http://localhost:8000
+const BASE = process.env.FASTAPI_BASE ?? "http://localhost:8000";
 
 
 export async function GET(req: NextRequest) {
