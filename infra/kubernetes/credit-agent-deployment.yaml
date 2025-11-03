@@ -1,0 +1,80 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: credit-agent
+  namespace: investiq
+  labels:
+    app: credit-agent
+    component: agent
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: credit-agent
+  template:
+    metadata:
+      labels:
+        app: credit-agent
+        component: agent
+    spec:
+      containers:
+        - name: credit-agent
+          image: <dockerhub-username>/investiq-credit-agent:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8082
+              name: metrics
+          envFrom:
+            - configMapRef:
+                name: investiq-config
+            - secretRef:
+                name: investiq-secrets
+          env:
+            - name: AGENT_NAME
+              value: "credit_agent"
+            - name: AGENT_QUEUE
+              valueFrom:
+                configMapKeyRef:
+                  name: investiq-config
+                  key: AGENT_CREDIT_QUEUE
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8082
+            initialDelaySeconds: 60
+            periodSeconds: 30
+            timeoutSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8082
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+      restartPolicy: Always
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: credit-agent
+  namespace: investiq
+  labels:
+    app: credit-agent
+    component: agent
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8082
+      targetPort: 8082
+      protocol: TCP
+      name: metrics
+  selector:
+    app: credit-agent

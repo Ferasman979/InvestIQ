@@ -1,0 +1,101 @@
+{
+  "dashboard": {
+    "title": "InvestIQ Business Metrics",
+    "tags": ["investiq", "business", "metrics"],
+    "timezone": "browser",
+    "schemaVersion": 27,
+    "version": 0,
+    "refresh": "30s",
+    "panels": [
+      {
+        "id": 1,
+        "title": "Transactions Processed",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "sum(increase(transactions_processed_total[1h]))",
+            "legendFormat": "Total Transactions"
+          }
+        ],
+        "gridPos": {"h": 6, "w": 6, "x": 0, "y": 0}
+      },
+      {
+        "id": 2,
+        "title": "Recurring Payments Automated",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "sum(increase(recurring_payments_automated_total[1h]))",
+            "legendFormat": "Automated Payments"
+          }
+        ],
+        "gridPos": {"h": 6, "w": 6, "x": 6, "y": 0}
+      },
+      {
+        "id": 3,
+        "title": "Fraud Transactions Blocked",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "sum(increase(fraud_transactions_blocked_total[1h]))",
+            "legendFormat": "Fraud Blocked"
+          }
+        ],
+        "gridPos": {"h": 6, "w": 6, "x": 12, "y": 0}
+      },
+      {
+        "id": 4,
+        "title": "Credit Optimizations Recommended",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "sum(increase(credit_optimizations_recommended_total[1h]))",
+            "legendFormat": "Optimizations"
+          }
+        ],
+        "gridPos": {"h": 6, "w": 6, "x": 18, "y": 0}
+      },
+      {
+        "id": 5,
+        "title": "Transaction Volume Over Time",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(transactions_processed_total[5m])",
+            "legendFormat": "Transactions/sec"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 6}
+      },
+      {
+        "id": 6,
+        "title": "Fraud Detection Rate",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(fraud_transactions_blocked_total[5m])",
+            "legendFormat": "Fraud Detections/sec"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 6}
+      },
+      {
+        "id": 7,
+        "title": "Notification Delivery Rate",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(notifications_sent_total[5m])",
+            "legendFormat": "{{notification_type}}"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 24, "x": 0, "y": 14}
+      }
+    ],
+    "time": {
+      "from": "now-1h",
+      "to": "now"
+    }
+  }
+}
+

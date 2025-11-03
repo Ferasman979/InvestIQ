@@ -1,0 +1,93 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+  namespace: investiq
+  labels:
+    app: backend
+    component: api
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: backend
+  template:
+    metadata:
+      labels:
+        app: backend
+        component: api
+    spec:
+      containers:
+        - name: backend
+          # For AWS ECR (recommended for EKS):
+          # Replace <AWS_ACCOUNT_ID> and <AWS_REGION> with your actual values
+          # image: <AWS_ACCOUNT_ID>.dkr.ecr.<AWS_REGION>.amazonaws.com/investiq-backend:latest
+          # For Docker Hub (alternative):
+          # image: <dockerhub-username>/investiq-backend:latest
+          # For local testing (build and load image):
+          image: investiq-backend:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8000
+              name: http
+          envFrom:
+            - configMapRef:
+                name: investiq-config
+            - secretRef:
+                name: investiq-secrets
+          env:
+            # DATABASE_URL is now stored in secrets (more secure than ConfigMap)
+            # This ensures password consistency and security
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: investiq-secrets
+                  key: DATABASE_URL
+            - name: REDIS_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: investiq-config
+                  key: REDIS_URL
+          livenessProbe:
+            httpGet:
+              path: /api/healthcheck
+              port: 8000
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /api/healthcheck
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 3
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+      restartPolicy: Always
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend
+  namespace: investiq
+  labels:
+    app: backend
+    component: api
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8000
+      targetPort: 8000
+      protocol: TCP
+      name: http
+  selector:
+    app: backend
