@@ -1,5 +1,4 @@
-# LLM Models
-models/
+
 
 # Front-end
 node_modules/
@@ -172,3 +171,103 @@ cython_debug/
 #.idea/
 
 *.db
+
+# ============================================
+# AWS Credentials & Config (Security)
+# ============================================
+.aws/
+.aws-profile
+*.pem
+*.key
+*.p12
+*-credentials.json
+credentials
+config
+
+# Secrets & API Keys
+secrets/
+*.secret
+api-keys.txt
+secrets.txt
+
+# Kubernetes Secrets (actual secrets files, not templates)
+infra/kubernetes/secrets.yaml
+monitoring/*secrets.yaml
+*.secrets.yaml
+
+# IDE & Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+*.sublime-project
+*.sublime-workspace
+*.code-workspace
+
+# OS Files (additional)
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Desktop.ini
+
+# Node.js (additional)
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnp/
+.pnp.js
+.npm
+.yarn/cache
+.yarn/unplugged
+.yarn/build-state.yml
+.yarn/install-state.gz
+.pnp.*
+
+# Terraform (if you use it)
+*.tfstate
+*.tfstate.*
+.terraform/
+.terraform.lock.hcl
+*.tfvars
+!example.tfvars
+
+# Serverless Framework
+.serverless/
+
+# Docker
+docker-compose.override.yml
+
+# Additional Database files
+*.sqlite
+*.sqlite3
+
+# Backup files
+*.bak
+*.backup
+
+# Build & Distribution (additional)
+out/
+.next/
+.nuxt/
+.cache/
+*.tgz
+*.tar.gz
+
+# Coverage & Testing (additional)
+.nyc_output/
+*.lcov
+
+# Temporary Files
+*.tmp
+*.temp
+.tmp/
+tmp/
+
+# Misc deployment
+.vercel/
+.netlify/
+.vscode-test/docker-compose.yml

@@ -1,6 +1,15 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from services.transaction_service import post_transaction
+from services.notification_service import send_notification
+import uuid
+
+app = FastAPI(title="Guardian Verification Agent")
+
+# CORS setup for frontend testing
+from routers import transaction_router
+
 app = FastAPI()
 app.title = "guardian"
 
@@ -9,16 +18,8 @@ api.title = "guardian api"
 app.mount("/api", api, name="api")
 
 
-# api.include_router(llm_router.router, prefix="/openai")
-# api.include_router(auth_router.router, prefix="/auth")
-# api.include_router(admin_router.router, prefix="/admin")
-# api.include_router(pii_router.router, prefix="/pii")
-# api.include_router(analytics_router.router, prefix="/data_leak")
-
-
-# Allow Front-end Origin in local development
+api.include_router(transaction_router.router, prefix="/transactions")
 origins = ["http://localhost:5173"]
-
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
@@ -33,7 +34,10 @@ app.add_middleware(
 
 @api.get("/healthcheck")
 async def healthcheck():
-    """
-    Endpoint to verify that the service is up and running
-    """
     return {"status": "guardian is running"}
+
+@api.get("/healthcheck")
+async def api_healthcheck():
+    return {"status": "guardian api is running"}
+
+

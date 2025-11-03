@@ -1,0 +1,149 @@
+# Template for docker-compose.ymln# Copy to docker-compose.yml and customize for your local setupn# docker-compose.yml is in .gitignore - use environment variables for passwordsnnversion: "3.8"
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: investiq-postgres
+    environment:
+      POSTGRES_USER: investiq
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-investiq123}
+      POSTGRES_DB: investiq_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U investiq"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - investiq-network
+
+  # Redis Queue
+  redis:
+    image: redis:7-alpine
+    container_name: investiq-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - investiq-network
+
+  # Backend API
+  backend:
+    build:
+      context: .
+      dockerfile: infra/docker/backend.Dockerfile
+    container_name: investiq-backend
+    environment:
+      DATABASE_URL: postgresql://investiq:${POSTGRES_PASSWORD:-investiq123}@postgres:5432/investiq_db
+      REDIS_URL: redis://redis:6379/0
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USERNAME: ${SMTP_USERNAME:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      EMAIL_FROM: ${EMAIL_FROM:-}
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./backend:/app/backend:ro
+    networks:
+      - investiq-network
+    restart: unless-stopped
+
+  # Payment Automation Agent
+  payment-agent:
+    build:
+      context: .
+      dockerfile: infra/docker/payment-agent.Dockerfile
+    container_name: investiq-payment-agent
+    environment:
+      DATABASE_URL: postgresql://investiq:${POSTGRES_PASSWORD:-investiq123}@postgres:5432/investiq_db
+      REDIS_URL: redis://redis:6379/0
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      AGENT_NAME: payment_agent
+      AGENT_QUEUE: payment_queue
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      backend:
+        condition: service_started
+    networks:
+      - investiq-network
+    restart: unless-stopped
+
+  # Security Verification Agent
+  security-agent:
+    build:
+      context: .
+      dockerfile: infra/docker/security-agent.Dockerfile
+    container_name: investiq-security-agent
+    environment:
+      DATABASE_URL: postgresql://investiq:${POSTGRES_PASSWORD:-investiq123}@postgres:5432/investiq_db
+      REDIS_URL: redis://redis:6379/0
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      AGENT_NAME: security_agent
+      AGENT_QUEUE: security_queue
+    ports:
+      - "8081:8081"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      backend:
+        condition: service_started
+    networks:
+      - investiq-network
+    restart: unless-stopped
+
+  # Credit Optimization Agent
+  credit-agent:
+    build:
+      context: .
+      dockerfile: infra/docker/credit-agent.Dockerfile
+    container_name: investiq-credit-agent
+    environment:
+      DATABASE_URL: postgresql://investiq:${POSTGRES_PASSWORD:-investiq123}@postgres:5432/investiq_db
+      REDIS_URL: redis://redis:6379/0
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      AGENT_NAME: credit_agent
+      AGENT_QUEUE: credit_queue
+    ports:
+      - "8082:8082"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      backend:
+        condition: service_started
+    networks:
+      - investiq-network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  investiq-network:
+    driver: bridge

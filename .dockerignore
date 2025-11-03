@@ -1,0 +1,101 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+.venv
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Poetry
+poetry.lock
+.poetry/
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.hypothesis/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Git
+.git/
+.gitignore
+
+# Documentation
+docs/
+*.md
+!README.md
+
+# Environment files (sensitive)
+.env
+.env.local
+.env.*.local
+.env.production
+.env.development
+.env.test
+
+# Logs
+*.log
+logs/
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Node (for frontend)
+node_modules/
+npm-debug.log
+yarn-error.log
+.next/
+dist/
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+
+# Terraform
+*.tfstate
+*.tfstate.*
+.terraform/
+
+# Kubernetes (not needed in containers)
+infra/kubernetes/
+
+# Monitoring configs (not needed in containers)
+monitoring/
+
+# Data files (sensitive CSV files, etc.)
+data/
+*.csv
+!**/test*.csv
+
+# Secrets and credentials
+secrets/
+*.secret
+*.key
+*.pem
+**/secrets.yaml
+!**/secrets.yaml.template
+
