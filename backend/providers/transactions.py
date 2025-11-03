@@ -7,6 +7,10 @@ from schemas.transaction import TransactionIn
 #from provider.verification import Verificaiton
 
 def create_transaction(db: Session, payload: TransactionIn) -> TransactionDB:
+    """
+    Create a new transaction in the database.
+    Returns the created transaction (already committed).
+    """
     tx = TransactionDB(
         amount=payload.amount,
         vendor=payload.vendor,
@@ -14,11 +18,11 @@ def create_transaction(db: Session, payload: TransactionIn) -> TransactionDB:
         tx_date=payload.date,
         status=TxStatus.pending,
     )
-    # if it goes to verification API we can have some liek tisd
-    #verify_transaction(payload)
-    # db.add(tx)
-    # db.commit()
-    # db.refresh(tx)
+    # Note: Verification is triggered after transaction creation
+    # via background task in the router
+    db.add(tx)
+    db.commit()
+    db.refresh(tx)
     return tx
 
 

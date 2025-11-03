@@ -239,6 +239,7 @@ yarn-error.log*
 .serverless/
 
 # Docker
+docker-compose.yml
 docker-compose.override.yml
 
 # Additional Database files
