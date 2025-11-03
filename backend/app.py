@@ -1,6 +1,10 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from services.transaction_service import post_transaction
+from services.notification_service import send_notification
+from services.detection_services import is_suspicious
+
 app = FastAPI()
 app.title = "Guardian Verification Agent"
 
