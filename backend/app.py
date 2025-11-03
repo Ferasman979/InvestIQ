@@ -20,7 +20,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-LOGGER = get_logger("guardian")
+LOGGER = get_logger("BankIQ-Guardian")
 
 # Dummy in-memory database
 TRANSACTIONS_DB = []
