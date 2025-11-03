@@ -3,7 +3,7 @@ import "./globals.css";
 
 
 export const metadata: Metadata = {
-    title: "Banking UI",
+    title: "Fraud IQ",
     description: "Transactions + Agent Chat",
 };
 
@@ -15,8 +15,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <header className="border-b border-border">
         <nav className="container flex items-center justify-between h-16">
         <div className="flex items-center gap-2">
-        <img src="/bank.svg" alt="logo" className="h-6 w-6" />
-        <span className="font-semibold">Banking UI</span>
+        <span className="font-semibold">Fraud IQ</span>
         </div>
         <div className="flex gap-4 text-sm text-muted">
         <a href="/" className="hover:text-white">Transactions</a>

@@ -191,7 +191,6 @@ export default function HomePage() {
       <Card>
         <CardHeader
           title="Recent Activity"
-          desc="Using local mock data and client-side verification"
         />
         <CardBody>
           <div className="flex flex-col gap-4">

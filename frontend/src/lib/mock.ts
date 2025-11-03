@@ -1,0 +1,67 @@
+import type { Txn } from "./types";
+
+// Local mock transactions for the table and testing.
+// Shape roughly matches FastAPI's Transaction model / response.
+
+export const txns: Txn[] = [
+  {
+    transaction_id: "tx-1001",
+    user_id: "user-123",
+    amount: 24.99,
+    currency: "CAD",
+    merchant: "Starbucks",
+    transaction_date: "2025-10-28T09:15:00Z",
+    status: "cleared",
+    suspicious_flag: false,
+    created_at: "2025-10-28T09:16:00Z",
+    updated_at: "2025-10-28T09:16:00Z",
+  },
+  {
+    transaction_id: "tx-1002",
+    user_id: "user-123",
+    amount: 1450.0,
+    currency: "CAD",
+    merchant: "Rent",
+    transaction_date: "2025-10-01T12:00:00Z",
+    status: "pending",
+    suspicious_flag: false,
+    created_at: "2025-10-01T12:01:00Z",
+    updated_at: "2025-10-01T12:01:00Z",
+  },
+  {
+    transaction_id: "tx-1003",
+    user_id: "user-123",
+    amount: 612.45,
+    currency: "CAD",
+    merchant: "Air Canada",
+    transaction_date: "2025-09-20T18:30:00Z",
+    status: "approved",
+    suspicious_flag: false,
+    created_at: "2025-09-20T18:31:00Z",
+    updated_at: "2025-09-20T18:31:00Z",
+  },
+  {
+    transaction_id: "tx-1004",
+    user_id: "user-123",
+    amount: 299.0,
+    currency: "CAD",
+    merchant: "Apple Store",
+    transaction_date: "2025-10-27T14:05:00Z",
+    status: "blocked",
+    suspicious_flag: true,
+    created_at: "2025-10-27T14:06:00Z",
+    updated_at: "2025-10-27T14:06:00Z",
+  },
+  {
+    transaction_id: "tx-1005",
+    user_id: "user-123",
+    amount: 19.99,
+    currency: "CAD",
+    merchant: "Netflix",
+    transaction_date: "2025-10-25T03:00:00Z",
+    status: "cleared",
+    suspicious_flag: false,
+    created_at: "2025-10-25T03:01:00Z",
+    updated_at: "2025-10-25T03:01:00Z",
+  },
+];
