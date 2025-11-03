@@ -12,6 +12,11 @@ app.mount("/api", api, name="api")
 
 
 api.include_router(transaction_router.router, prefix="/transactions")
+# api.include_router(auth_router.router, prefix="/auth")
+# api.include_router(admin_router.router, prefix="/admin")
+# api.include_router(pii_router.router, prefix="/pii")
+# api.include_router(analytics_router.router, prefix="/data_leak")
+
 
 # Allow Front-end Origin in local development
 origins = ["http://localhost:5173"]

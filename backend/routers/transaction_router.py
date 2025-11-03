@@ -22,7 +22,7 @@ def create_tx(payload: TransactionIn, db: Session = Depends(get_db)):
 
 
 
-@router.get("/{tx_id}", response_model=TransactionOut)
+@router.get("/get_trx/{tx_id}", response_model=TransactionOut)
 def get_tx(tx_id: int, db: Session = Depends(get_db)):
     tx = get_transaction(db, tx_id)
     if not tx:
@@ -34,7 +34,7 @@ def get_tx(tx_id: int, db: Session = Depends(get_db)):
 
 
 
-@router.post("/{tx_id}/approve", response_model=PostTransactionOut)
+@router.post("/approve_trx/{tx_id}", response_model=PostTransactionOut)
 def approve_tx(tx_id: int, payload: ApproveIn, db: Session = Depends(get_db)):
     tx = get_transaction(db, tx_id)
     if not tx:
