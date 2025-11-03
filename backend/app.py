@@ -1,8 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from models.transaction_model import Transaction
-from models.notification_model import Notification
-from services.detection_services import is_suspicious
+
 from services.transaction_service import post_transaction
 from services.notification_service import send_notification
 from logging_utils import get_logger
@@ -11,6 +9,17 @@ import uuid
 app = FastAPI(title="Guardian Verification Agent")
 
 # CORS setup for frontend testing
+from routers import transaction_router
+
+app = FastAPI()
+app.title = "guardian"
+
+api = FastAPI(root_path="/api")
+api.title = "guardian api"
+app.mount("/api", api, name="api")
+
+
+api.include_router(transaction_router.router, prefix="/transactions")
 origins = ["http://localhost:5173"]
 app.add_middleware(
     CORSMiddleware,
