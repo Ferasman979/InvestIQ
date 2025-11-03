@@ -1,22 +1,49 @@
 "use client";
+
 import { useEffect, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import type { ChatMessage } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardBody, CardHeader } from "@/components/ui/card";
 
-type ChatMessage = { id: string; role: "user" | "assistant"; content: string; timestamp: number };
-
 export default function ChatPage() {
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    { id: "m0", role: "assistant", content: "Hi. I can analyze transactions and explain anomalies.", timestamp: Date.now() },
-  ]);
+  const searchParams = useSearchParams();
+  const txId = searchParams.get("txId");
+  const merchant = searchParams.get("merchant");
+  const amount = searchParams.get("amount");
+
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [text, setText] = useState("");
   const listRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => { listRef.current?.scrollTo({ top: listRef.current.scrollHeight }); }, [messages]);
+  useEffect(() => {
+    const base: ChatMessage[] = [];
+    if (txId && merchant && amount) {
+      base.push({
+        id: "m0",
+        role: "assistant",
+        content: `We flagged a transaction (${txId}) at ${merchant} for $${amount}. Is this your transaction? Reply YES or NO.`,
+        timestamp: Date.now(),
+      });
+    } else {
+      base.push({
+        id: "m0",
+        role: "assistant",
+        content: "Hi. I can help verify transactions and explain suspicious activity.",
+        timestamp: Date.now(),
+      });
+    }
+    setMessages(base);
+  }, [txId, merchant, amount]);
 
-  async function send() {
+  useEffect(() => {
+    listRef.current?.scrollTo({ top: listRef.current.scrollHeight });
+  }, [messages]);
+
+  function handleSend() {
     if (!text.trim()) return;
+
     const user: ChatMessage = {
       id: crypto.randomUUID(),
       role: "user",
@@ -24,36 +51,45 @@ export default function ChatPage() {
       timestamp: Date.now(),
     };
     setMessages((m) => [...m, user]);
-    setText("");
 
-    const r = await fetch("/api/chat", {
-      method: "POST",
-      body: JSON.stringify({ message: user.content }),
-    });
-    const json = await r.json();
+    const replyText = mockReply(user.content, txId, merchant, amount);
     const asst: ChatMessage = {
       id: crypto.randomUUID(),
       role: "assistant",
-      content: json.reply,
+      content: replyText,
       timestamp: Date.now(),
     };
     setMessages((m) => [...m, asst]);
+    setText("");
   }
 
-
-
-  function mockReply(q: string) {
-    if (/apple/i.test(q)) return "The Apple charge was flagged due to a higher-than-usual amount.";
-    if (/recurr|subscription|rent/i.test(q)) return "Recurring pattern detected. I can schedule a reminder.";
-    if (/budget|spend/i.test(q)) return "Top categories this week are Food and Transport.";
-    return "Noted. Ask about a transaction, budget, or recurring payment.";
+  function mockReply(
+    input: string,
+    txId: string | null,
+    merchant: string | null,
+    amount: string | null
+  ) {
+    const normalized = input.trim().toLowerCase();
+    if ((normalized === "yes" || normalized === "y") && txId) {
+      return `Thanks, confirmed. I will approve transaction ${txId} and remove the suspicious flag.`;
+    }
+    if ((normalized === "no" || normalized === "n") && txId) {
+      return `Understood. I will keep transaction ${txId} blocked and notify your bank's security team.`;
+    }
+    if (/why|reason|flag/i.test(normalized) && txId) {
+      return `This transaction was flagged based on amount and merchant pattern. Once you confirm, I can approve it.`;
+    }
+    return "Got it. Reply YES if this transaction is yours, or NO if it is not.";
   }
 
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-semibold">Agent Chat</h1>
       <Card>
-        <CardHeader title="Conversation" desc="Mock agent. Replace with API when ready" />
+        <CardHeader
+          title="Verification assistant"
+          desc="Answer questions about flagged transactions. Backend will approve/deny later."
+        />
         <CardBody className="space-y-4">
           <div ref={listRef} className="h-[450px] overflow-y-auto pr-2">
             <div className="space-y-3">
@@ -76,9 +112,9 @@ export default function ChatPage() {
             <Input
               value={text}
               onChange={(e) => setText(e.target.value)}
-              placeholder="e.g., Why was my Apple charge flagged?"
+              placeholder="Type YES or NO, or ask why it was flagged"
             />
-            <Button onClick={send}>Send</Button>
+            <Button onClick={handleSend}>Send</Button>
           </div>
         </CardBody>
       </Card>
