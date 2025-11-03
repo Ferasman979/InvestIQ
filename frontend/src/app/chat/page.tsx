@@ -23,7 +23,7 @@ export default function ChatPage() {
       base.push({
         id: "m0",
         role: "assistant",
-        content: `We flagged a transaction (${txId}) at ${merchant} for $${amount}. Is this your transaction? Reply YES or NO.`,
+        content: `We flagged a transaction (${txId}) at ${merchant} for $${amount}. Please answer the following security question:\nWhat is your mother's maiden name?.`,
         timestamp: Date.now(),
       });
     } else {
