@@ -1,4 +1,6 @@
-# Template for docker-compose.ymln# Copy to docker-compose.yml and customize for your local setupn# docker-compose.yml is in .gitignore - use environment variables for passwordsnnversion: "3.8"
+# Template for docker-compose.yml
+# Copy to docker-compose.yml and customize for your local setup
+# docker-compose.yml is in .gitignore - use environment variables for passwords
 
 services:
   # PostgreSQL Database

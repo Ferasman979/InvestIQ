@@ -95,10 +95,33 @@ docker-compose logs postgres
 docker-compose restart postgres
 ```
 
+**Docker Hub authentication error?**
+```bash
+# If you see: "unauthorized: email must be verified before using account"
+
+# Option 1: Login to Docker Hub (recommended)
+docker login
+
+# Option 2: Pull images without login (public images should work)
+docker pull postgres:15-alpine
+docker pull redis:7-alpine
+
+# Then try again
+docker-compose up -d postgres redis
+```
+
+**Docker Compose version warning?**
+```bash
+# If you see: "the attribute `version` is obsolete"
+# This is just a warning - it won't break anything
+# You can ignore it, or remove the "version: '3.8'" line from docker-compose.yml
+```
+
 **Port already in use?**
 ```bash
 # Check what's using port 8000
-lsof -i :8000
+lsof -i :8000  # macOS/Linux
+netstat -ano | findstr :8000  # Windows
 
 # Use a different port
 poetry run uvicorn app:app --reload --port 8001
