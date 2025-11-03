@@ -181,7 +181,7 @@ export default function HomePage() {
                 type="submit"
                 className="rounded-xl bg-indigo-600 hover:bg-indigo-500 px-4 py-2 text-sm font-medium"
               >
-                Create & verify
+                Add Transaction
               </button>
             </form>
           </CardBody>
