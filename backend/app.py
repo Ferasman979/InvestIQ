@@ -21,6 +21,13 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+LOGGER = get_logger("guardian")
+
+# Dummy in-memory database
+TRANSACTIONS_DB = []
+
+NOTIFICATIONS_DB = []
+
 
 @api.get("/healthcheck")
 async def api_healthcheck():
